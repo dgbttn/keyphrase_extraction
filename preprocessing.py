@@ -2,9 +2,7 @@ import string
 import re
 from vncorenlp import VnCoreNLP
 
-from reader import FileType
-
-annotator = VnCoreNLP("VnCoreNLP-1.1.1.jar", annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
+annotator = VnCoreNLP('VnCoreNLP-1.1.1.jar', annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
 
 def remove_punctuations(text):
     puncs = set(re.sub(r"[/.-]", "", string.punctuation))
@@ -15,34 +13,36 @@ def remove_punctuations(text):
 
 
 def get_main_text(text):
-    return max(text.split('|'), key=len)
+    return re.sub(r"\|[^\n]*\|", "", text)
+    # return max(text.split('|'), key=len)
 
 
-def lemmatize(tags, allowed_postags=['A', 'N', 'Ny', 'Np', 'V', 'Z']):
-    return [word for (word, tag) in tags if tag in allowed_postags]
+def lemmatize(doc, allowed_postags=['A', 'N', 'Ny', 'Np', 'V', 'Z']):
+    sentences = []
+    for sent in doc:
+        new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
+        sentences.append(new_sent)
+    return sentences
 
 
 def pos_tagging(text):
     annotated_text = annotator.annotate(text)
-    sentences = annotated_text['sentences']
-    text_out = []
-    for sen in sentences:
-        new_sen = [(w['form'], w['posTag']) for w in sen]
-        text_out = text_out + new_sen
-    return text_out
+    doc = annotated_text['sentences']
+    sentences = []
+    for sent in doc:
+        new_sent = [(w['form'], w['posTag']) for w in sent]
+        sentences.append(new_sent)
+    return sentences
 
 
-def preprocessing(text, file_type=None):
+def preprocessing(text):
     text = text.strip()
-    if file_type == FileType.CONTENT:
-        text = get_main_text(text)
-
-    if file_type == FileType.ABOUT:
-        vv = ['V/v', 'v/v', 'Về', 'về', 'Về việc', 'về việc']
-        for v in vv:
-            if text.find(v)>-1:
-                text = text.replace(v, '', 1)
-                break
+    text = get_main_text(text)
+    vv = ['V/v', 'v/v', 'Về việc', 'về việc', 'Về', 'về']
+    for v in vv:
+        if text.startswith(v):
+            text = text.replace(v, '', 1)
+            break
         
     text = remove_punctuations(text)
     return text

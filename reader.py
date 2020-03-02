@@ -3,11 +3,6 @@ from os.path import isfile, join
 from enum import Enum
 
 
-class FileType(Enum):
-    ABOUT = 1
-    CONTENT = 2
-
-
 def get_file_list(folder_path):
     fileList = [join(folder_path, f)
                 for f in listdir(folder_path) if isfile(join(folder_path, f))]
