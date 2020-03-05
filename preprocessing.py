@@ -9,12 +9,12 @@ def remove_punctuations(text):
     for ch in puncs:
         text = text.replace(ch, " ")
     return re.sub(r"\s+", " ", text).strip()
-    # return text
 
 
 def get_main_text(text):
-    return re.sub(r"\|[^\n]*\|", "", text)
-    # return max(text.split('|'), key=len)
+    new_text = re.sub(r"\|[^\n]*\|", "", text)
+    new_text = re.sub(r"\s+", " ", text).strip()
+    return new_text
 
 
 def lemmatize(doc, allowed_postags=['A', 'N', 'Ny', 'Np', 'V', 'Z']):
