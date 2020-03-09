@@ -33,3 +33,6 @@ class Wordbook(object):
                     if word not in self.vocab:
                         self.vocab[word] = i
                         i += 1
+
+    def set_ignore_words(self, max_df=0.90):
+        

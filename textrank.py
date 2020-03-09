@@ -2,11 +2,17 @@ import numpy as np
 from collections import OrderedDict
 
 class TextRankModel(object):
-    def __init__(self, vocab, damping=0.85, min_diff=1e-5, steps=10):
-        self.vocab = vocab
+    def __init__(self, damping=0.85, min_diff=1e-5, steps=10):
         self.damping = damping # damping coefficient
         self.min_diff = min_diff # convergence threshold
         self.steps = steps # iteration steps
+        self.vocab = None
+        self.ignore_words = None
+
+    def init_wordbook(self, wordbook):
+        if wordbook and wordbook.vocab and wordbook.ignore_words:
+            self.vocab = wordbook.vocab
+            self.ignore_words = wordbook.ignore_words
 
     @staticmethod
     def __get_token_pairs(self, sentences, window_size=4):

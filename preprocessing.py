@@ -1,8 +1,7 @@
 import string
 import re
-from vncorenlp import VnCoreNLP
+from annotator import annotator
 
-annotator = VnCoreNLP('VnCoreNLP-1.1.1.jar', annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
 
 def remove_punctuations(text):
     puncs = set(re.sub(r"[/.-]", "", string.punctuation))
@@ -12,9 +11,9 @@ def remove_punctuations(text):
 
 
 def get_main_text(text):
-    new_text = re.sub(r"\|[^\n]*\|", "", text)
-    new_text = re.sub(r"\s+", " ", text).strip()
-    return new_text
+    text = re.sub(r"\|[^\n]*\|", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 def lemmatize(doc, allowed_postags=['A', 'N', 'Ny', 'Np', 'V', 'Z']):
@@ -24,19 +23,7 @@ def lemmatize(doc, allowed_postags=['A', 'N', 'Ny', 'Np', 'V', 'Z']):
         sentences.append(new_sent)
     return sentences
 
-
-def pos_tagging(text):
-    annotated_text = annotator.annotate(text)
-    doc = annotated_text['sentences']
-    sentences = []
-    for sent in doc:
-        new_sent = [(w['form'], w['posTag']) for w in sent]
-        sentences.append(new_sent)
-    return sentences
-
-
 def preprocessing(text):
-    text = text.strip()
     text = get_main_text(text)
     vv = ['V/v', 'v/v', 'Về việc', 'về việc', 'Về', 'về']
     for v in vv:
@@ -50,6 +37,7 @@ def preprocessing(text):
 
 def get_candidates(text):
     text = preprocessing(text)
-    text = lemmatize(pos_tagging(text))
+    pos_tagged_text = annotator.pos_tagging(text)
+    text = lemmatize(pos_tagged_text)
     # text = list(set(text))
     return text
