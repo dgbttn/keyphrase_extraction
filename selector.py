@@ -1,4 +1,8 @@
+import string
+import re
 from vncorenlp import VnCoreNLP
+
+from preprocessing import preprocessing
 
 ORGANIZATION = 'ORG'
 PERSON = 'PER'
@@ -6,23 +10,18 @@ LOCATION = 'LOC'
 
 NER_TAGS = [ORGANIZATION, PERSON, LOCATION]
 
-class Annotator:
+class Selector:
 
-    anno = VnCoreNLP('VnCoreNLP-1.1.1.jar', annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
-
-    endline = ('.', 'O')
+    def __init__(self):
+        self.annotator = VnCoreNLP('VnCoreNLP-1.1.1.jar', annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
+        self.endline = ('.', 'O')
 
     def pos_tagging(self, text):
-        annotated_text = self.anno.annotate(text)
-        doc = annotated_text['sentences']
-        sentences = []
-        for sent in doc:
-            new_sent = [(w['form'], w['posTag']) for w in sent]
-            sentences.append(new_sent)
-        return sentences
+        pos_tagged_text = self.annotator.pos_tag(text)
+        return pos_tagged_text
 
     def ner(self, text):
-        ner_text = self.anno.ner(text)
+        ner_text = self.annotator.ner(text)
         old_tag = ''
         entity_segments = []
         entities = []
@@ -51,6 +50,18 @@ class Annotator:
         
         return list(set(entities))
 
+    @staticmethod
+    def lemmatize(doc, allowed_postags=['N', 'Ny', 'Np', 'V', 'Z']):
+        sentences = []
+        for sent in doc:
+            new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
+            sentences.append(new_sent)
+        return sentences
 
+    def get_candidates(self, text):
+        clear_text = preprocessing(text)
 
-annotator = Annotator()
+        pos_tagged_text = self.pos_tagging(clear_text)
+        candidates = self.lemmatize(pos_tagged_text)
+
+        return candidates

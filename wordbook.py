@@ -1,18 +1,14 @@
-from collections import OrderedDict
 from reader import get_file_list, read_text_file
-from preprocessing import get_candidates
 
 class Wordbook(object): 
     def __init__(self, folder_path):
         self.folder_path = folder_path
         self.corpora = []
-        self.vocab = OrderedDict()
-        self.__read_corpora_from_folder()
+        self.vocab = {} # number of document that term in 
 
-    def __read_corpora_from_folder(self):
+    def read_corpora_from_folder(self, candidate_selector):
         self.file_list = get_file_list(self.folder_path)
 
-        i = 0
         for a, c in self.file_list:
             about_text = read_text_file(a)
             content_text = read_text_file(c)
@@ -20,7 +16,9 @@ class Wordbook(object):
             # INSERT NER
 
             try:
-                doc = get_candidates(about_text) + get_candidates(content_text)
+                about_candidates = candidate_selector.get_candidates(about_text)
+                content_candidates = candidate_selector.get_candidates(content_text)
+                doc = about_candidates + content_candidates
             except Exception as e:
                 doc = []
                 print(a, e)
@@ -28,11 +26,11 @@ class Wordbook(object):
             self.corpora.append(doc)
             print(len(self.corpora))
 
-            for sent in doc:
-                for word in sent:
-                    if word not in self.vocab:
-                        self.vocab[word] = i
-                        i += 1
+            word_list = set([word for sent in doc for word in sent])
+            for word in word_list:
+                self.vocab[word] = self.vocab.get(word, 0) + 1
 
-    def set_ignore_words(self, max_df=0.90):
-        
+    def set_ignore_words(self, min_df_count=0.05, max_df=0.50):
+        term_document = sorted(self.vocab.items(), key=lambda x: x[1])
+        n = len(self.corpora)
+        self.ignore_words = [word for word, df in term_document if df<min_df_count or df/n>max_df]

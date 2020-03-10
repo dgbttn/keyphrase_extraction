@@ -1,7 +1,5 @@
 import string
 import re
-from annotator import annotator
-
 
 def remove_punctuations(text):
     puncs = set(re.sub(r"[/.-]", "", string.punctuation))
@@ -15,14 +13,6 @@ def get_main_text(text):
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
-
-def lemmatize(doc, allowed_postags=['A', 'N', 'Ny', 'Np', 'V', 'Z']):
-    sentences = []
-    for sent in doc:
-        new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
-        sentences.append(new_sent)
-    return sentences
-
 def preprocessing(text):
     text = get_main_text(text)
     vv = ['V/v', 'v/v', 'Về việc', 'về việc', 'Về', 'về']
@@ -32,12 +22,4 @@ def preprocessing(text):
             break
         
     text = remove_punctuations(text)
-    return text
-
-
-def get_candidates(text):
-    text = preprocessing(text)
-    pos_tagged_text = annotator.pos_tagging(text)
-    text = lemmatize(pos_tagged_text)
-    # text = list(set(text))
     return text

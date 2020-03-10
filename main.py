@@ -1,12 +1,21 @@
 from wordbook import Wordbook
 from textrank import TextRankModel
+from selector import Selector
 import os
 
 if __name__=='__main__':
+
+    # init
+    output_path = 'output'
     wb = Wordbook('datasets/data_original_files0-9999')
     tr = TextRankModel(wb.vocab)
+    selector = Selector()
 
-    output_path = 'output'
+    # load corpora
+    wb.read_corpora_from_folder(selector)
+    wb.set_ignore_words()
+
+    exit()
 
     for i, doc in enumerate(wb.corpora):
         if len(doc)==0:

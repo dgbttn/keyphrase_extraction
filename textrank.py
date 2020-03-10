@@ -52,7 +52,7 @@ class TextRankModel(object):
         pr = np.array([1] * len(self.vocab))
 
         previous_pr = 0
-        for epoch in range(self.steps):
+        for _ in range(self.steps):
             pr = (1 - self.damping) + self.damping * np.dot(g, pr)
             if abs(previous_pr - sum(pr)) < self.min_diff:
                 break
