@@ -1,6 +1,5 @@
 from os import listdir
 from os.path import isfile, join
-from enum import Enum
 
 
 def get_file_list(folder_path):
