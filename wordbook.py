@@ -36,3 +36,4 @@ class Wordbook(object):
         term_document = sorted(self.vocab.items(), key=lambda x: x[1])
         n = len(self.corpora)
         self.ignore_words = [word for word, df in term_document if df<=min_df_count or df/n>=max_df]
+

@@ -4,7 +4,7 @@ import re
 def remove_punctuations(text):
     puncs = set(re.sub(r"[,/.-]", "", string.punctuation))
     for ch in puncs:
-        text = text.replace(ch, " ")
+        text = text.replace(ch, ", ")
     return re.sub(r"\s+", " ", text).strip()
 
 

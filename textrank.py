@@ -1,5 +1,4 @@
 import numpy as np 
-from collections import OrderedDict
 
 class TextRankModel(object):
     def __init__(self, damping=0.85, min_diff=1e-5, steps=10):

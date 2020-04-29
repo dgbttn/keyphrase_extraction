@@ -6,7 +6,7 @@ from textrank import TextRankModel
 file_list = get_file_list('datasets/data_original_files0-9999')
 # text = read_text_file(file_list[0][1])
 
-number = 2222
+number = 134
 
 a = read_text_file(file_list[number][0])
 c = read_text_file(file_list[number][1])
