@@ -1,7 +1,4 @@
-import string
-import re
 from vncorenlp import VnCoreNLP
-
 from preprocessing import preprocessing
 
 ORGANIZATION = 'ORG'
@@ -12,26 +9,26 @@ NER_TAGS = [ORGANIZATION, PERSON, LOCATION]
 
 class Extractor:
 
-    def __init__(self):
+    def __init__(self, jarfile='VnCoreNLP-1.1.1.jar'):
         print('Init VnCoreNLP Annotator...')
-        self.annotator = VnCoreNLP('VnCoreNLP-1.1.1.jar', annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
+        self.annotator = VnCoreNLP(jarfile, annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
 
-    def __pos_tagging(self, text):
+    def _pos_tagging(self, text):
         pos_tagged_text = self.annotator.pos_tag(text)
         return pos_tagged_text
 
-    def __ner(self, text):
+    def _ner(self, text):
         ner_text = self.annotator.ner(text)
         return ner_text
 
-    def __lemmatize(self, doc, allowed_postags=['N', 'Ny', 'Np', 'V', 'Z']):
+    def _lemmatize(self, doc, allowed_postags=['N', 'Ny', 'Np', 'V', 'A', 'Z', 'M', 'Y']):
         sentences = []
         for sent in doc:
             new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
             sentences.append(new_sent)
         return sentences
 
-    def __get_named_entities(self, text):
+    def _get_named_entities(self, text):
         endline = ('.', 'O')
         old_tag = ''
         entity_segments = []
@@ -71,4 +68,4 @@ class Extractor:
         ner_text = [[(word['form'], word['nerLabel']) for word in sent] for sent in annotated_text['sentences']]
         pos_tagged_text = [[(word['form'], word['posTag']) for word in sent] for sent in annotated_text['sentences']]
 
-        return self.__get_named_entities(ner_text), self.__lemmatize(pos_tagged_text)
+        return self._get_named_entities(ner_text), self._lemmatize(pos_tagged_text)

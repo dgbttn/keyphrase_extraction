@@ -13,7 +13,7 @@ class TextRankModel(object):
             self.ignore_words = wordbook.ignore_words
 
 
-    def __generate_vocab(self, doc):
+    def _generate_vocab(self, doc):
         vocab = {}
         cnt = 0
         for sent in doc:
@@ -24,7 +24,7 @@ class TextRankModel(object):
         return vocab
 
 
-    def __get_token_pairs(self, sentences, window_size=4):
+    def _get_token_pairs(self, sentences, window_size=4):
         token_pairs = []
         for sent in sentences:
             for i, word in enumerate(sent):
@@ -37,11 +37,11 @@ class TextRankModel(object):
         return token_pairs
 
 
-    def __symmetrize(self, a):
+    def _symmetrize(self, a):
         return a + a.T - np.diag(a.diagonal())
 
 
-    def __get_matrix(self, vocab, token_pairs):        
+    def _get_matrix(self, vocab, token_pairs):        
         vocab_size = len(vocab)
         g = np.zeros((vocab_size, vocab_size), dtype='float')
 
@@ -49,7 +49,7 @@ class TextRankModel(object):
             i, j = vocab[w1], vocab[w2]
             g[i][j] = 1
 
-        g = self.__symmetrize(g)
+        g = self._symmetrize(g)
 
         norm = np.sum(g, axis=0)
         g_norm = np.divide(g, norm, where=norm!=0)
@@ -57,11 +57,11 @@ class TextRankModel(object):
         return g_norm
 
 
-    def __analyze(self, doc, window_size=4):
-        vocab = self.__generate_vocab(doc)
-        token_pairs = self.__get_token_pairs(doc, window_size)
+    def _analyze(self, doc, window_size=4):
+        vocab = self._generate_vocab(doc)
+        token_pairs = self._get_token_pairs(doc, window_size)
         
-        g = self.__get_matrix(vocab, token_pairs)
+        g = self._get_matrix(vocab, token_pairs)
 
         # Init weight (pagerank values)
         pr = np.array([1] * len(vocab))
@@ -83,7 +83,7 @@ class TextRankModel(object):
 
 
     def get_keywords(self, doc, number=10, window_size=4):
-        node_weights = self.__analyze(doc, window_size)
+        node_weights = self._analyze(doc, window_size)
         node_weights = sorted(node_weights.items(), key=lambda t: t[1], reverse=True)
 
         keywords = []

@@ -1,24 +1,25 @@
+import os
+import sys
 from wordbook import Wordbook
 from textrank import TextRankModel
 from extractor import Extractor
-import os
 
 if __name__=='__main__':
 
     # init
     output_path = 'output'
-    wb = Wordbook('datasets/data_original_files0-9999')
-    extractor = Extractor()
+    wb = Wordbook(folder_path='datasets/data_original_files0-9999')
+    extr = Extractor(jarfile='VnCoreNLP-1.1.1.jar')
 
     # load corpora
-    wb.extract_corpora(extractor)
+    wb.extract_corpora(candidate_extractor=extr)
     wb.set_ignore_words()
 
     # init textrank model
     tr = TextRankModel()
-    tr.init_wordbook(wb)
+    tr.init_wordbook(wordbook=wb)
 
-    exit()
+    sys.exit()
 
     for i, doc in enumerate(wb.corpora):
         if len(doc)==0:

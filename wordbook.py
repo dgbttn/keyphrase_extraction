@@ -13,8 +13,6 @@ class Wordbook(object):
             about_text = read_text_file(a)
             content_text = read_text_file(c)
 
-            # INSERT NER
-
             try:
                 a_ners, a_candidates = candidate_extractor.extract(about_text)
                 c_ners, c_candidates = candidate_extractor.extract(content_text)
@@ -36,4 +34,3 @@ class Wordbook(object):
         term_document = sorted(self.vocab.items(), key=lambda x: x[1])
         n = len(self.corpora)
         self.ignore_words = [word for word, df in term_document if df<=min_df_count or df/n>=max_df]
-
