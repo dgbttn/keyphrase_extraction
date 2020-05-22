@@ -6,11 +6,11 @@ class TextRankModel(object):
         self.min_diff = min_diff # convergence threshold
         self.steps = steps # iteration steps
         self.vocab = None
-        self.ignore_words = None
+        self.ignored_words = []
 
     def init_wordbook(self, wordbook):
-        if wordbook and wordbook.ignore_words:
-            self.ignore_words = wordbook.ignore_words
+        if wordbook and wordbook.ignored_words:
+            self.ignored_words = wordbook.ignored_words
 
 
     def _generate_vocab(self, doc):
@@ -83,6 +83,8 @@ class TextRankModel(object):
 
 
     def get_keywords(self, doc, number=10, window_size=4):
+        doc = [[w for w in sent if w not in self.ignored_words] for sent in doc]
+
         node_weights = self._analyze(doc, window_size)
         node_weights = sorted(node_weights.items(), key=lambda t: t[1], reverse=True)
 

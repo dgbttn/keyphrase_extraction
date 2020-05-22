@@ -6,7 +6,7 @@ from textrank import TextRankModel
 file_list = get_file_list('datasets/data_original_files0-9999')
 # text = read_text_file(file_list[0][1])
 
-number = 134
+number = 9000
 
 a = read_text_file(file_list[number][0])
 c = read_text_file(file_list[number][1])
@@ -33,5 +33,3 @@ print('Keywords:')
 keywords = tr.get_keywords(doc, number=20, window_size=4)
 for kw, point in keywords:
     print(kw, '-', point)
-
-
