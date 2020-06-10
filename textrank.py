@@ -1,17 +1,17 @@
-import numpy as np 
+import numpy as np
 
-class TextRankModel(object):
+
+class TextRankModel:
+
     def __init__(self, damping=0.85, min_diff=1e-5, steps=10):
-        self.damping = damping # damping coefficient
-        self.min_diff = min_diff # convergence threshold
-        self.steps = steps # iteration steps
+        self.damping = damping  # damping coefficient
+        self.min_diff = min_diff  # convergence threshold
+        self.steps = steps  # iteration steps
         self.vocab = None
         self.ignored_words = []
 
-    def init_wordbook(self, wordbook):
-        if wordbook and wordbook.ignored_words:
-            self.ignored_words = wordbook.ignored_words
-
+    def init_wordbook(self, ignored_words=()):
+        self.ignored_words = ignored_words
 
     def _generate_vocab(self, doc):
         vocab = {}
@@ -19,10 +19,9 @@ class TextRankModel(object):
         for sent in doc:
             for word in sent:
                 if word not in vocab:
-                    vocab[word] = cnt 
+                    vocab[word] = cnt
                     cnt += 1
         return vocab
-
 
     def _get_token_pairs(self, sentences, window_size=4):
         token_pairs = []
@@ -36,12 +35,10 @@ class TextRankModel(object):
                         token_pairs.append(pair)
         return token_pairs
 
-
     def _symmetrize(self, a):
         return a + a.T - np.diag(a.diagonal())
 
-
-    def _get_matrix(self, vocab, token_pairs):        
+    def _get_matrix(self, vocab, token_pairs):
         vocab_size = len(vocab)
         g = np.zeros((vocab_size, vocab_size), dtype='float')
 
@@ -52,15 +49,14 @@ class TextRankModel(object):
         g = self._symmetrize(g)
 
         norm = np.sum(g, axis=0)
-        g_norm = np.divide(g, norm, where=norm!=0)
-    
-        return g_norm
+        g_norm = np.divide(g, norm, where=norm != 0)
 
+        return g_norm
 
     def _analyze(self, doc, window_size=4):
         vocab = self._generate_vocab(doc)
         token_pairs = self._get_token_pairs(doc, window_size)
-        
+
         g = self._get_matrix(vocab, token_pairs)
 
         # Init weight (pagerank values)
@@ -78,9 +74,8 @@ class TextRankModel(object):
         node_weights = {}
         for word, index in vocab.items():
             node_weights[word] = pr[index]
-        
-        return node_weights
 
+        return node_weights
 
     def get_keywords(self, doc, number=10, window_size=4):
         doc = [[w for w in sent if w not in self.ignored_words] for sent in doc]
