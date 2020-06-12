@@ -107,7 +107,7 @@ class Extractor:
             pos_tags = [token.posTag for token in sent]
             for ner, _ in ners:
                 i = raw_sent.find(ner)
-                while i > -1:
+                while i > -1 and ner.count(' ') > 0:
                     raw_sent = raw_sent.replace(ner, ner.replace(' ', '_'), 1)
                     i = raw_sent.count(' ', 0, i)
                     pos_tags[i: i+ner.count(' ')+1] = ['N']

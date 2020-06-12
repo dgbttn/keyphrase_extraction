@@ -35,12 +35,20 @@ tr = TextRankModel()
 #     print(kw, '-', point)
 
 
-text = 'Kính gửi: Ủy ban nhân dân quận Gò Vấp \n \
- Sở Y tế nhận được mail của Cơ quan đại diện tại Thành phố Hồ Chí Minh Báo Đời sống & Tiêu dùng về việc phản ánh của bạn đọc tại Thành phố Hồ Chí Minh xuất hiện một số sản phẩm chăm sóc sức khỏe nhãn hiệu Sắc Mộc Thiên (địa chỉ trên sản phẩm: 28/10 Phạm Văn Chiêu, Phường 8, quận Gò Vấp) có dấu hiệu vi phạm quy định trong lĩnh vực Y tế.'
+text = 'Vv phản ánh của Báo Đời sống & Tiêu dùng liên quan đến các dấu hiệu vi phạm của HKD Sắc Mộc Thiên. CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM. Độc lập - Tự do – Hạnh phúc. Thành phố Hồ Chí Minh, ngày tháng năm 2018 .\
+ Kính gửi: Ủy ban nhân dân quận Gò Vấp. \
+ Sở Y tế nhận được mail của Cơ quan đại diện tại Thành phố Hồ Chí Minh Báo Đời sống & Tiêu dùng về việc phản ánh của bạn đọc tại Thành phố Hồ Chí Minh \
+ xuất hiện một số sản phẩm chăm sóc sức khỏe nhãn hiệu Sắc Mộc Thiên (địa chỉ trên sản phẩm: 28/10 Phạm Văn Chiêu, Phường 8, quận Gò Vấp) có dấu hiệu vi phạm quy định trong lĩnh vực Y tế. \
+ Được biết, ngay sau khi Ủy ban nhân dân quận Gò Vấp xác minh và trả lời báo chí về việc không tồn tại hoạt động của Hộ kinh doanh Sắc Mộc Thiên \
+do Ông Vũ Duy Mạnh làm đại diện tại địa chỉ số 28/10 Phạm Văn Chiêu, Phường 8, quận Gò Vấp thì Ông Mạnh chấm dứt hoạt động Hộ kinh doanh tại địa chỉ trên \
+và thành lập Hộ kinh doanh Sắc Mộc Thiên tại địa chỉ 25/8/4 Lý Thường Kiệt, Phường 4, quận Gò Vấp. \
+ Sở Y tế đề nghị Ủy ban nhân dân quận Gò Vấp tiếp tục giám sát hoạt động, kiểm tra, xử lý đối với Hộ kinh doanh Sắc Mộc Thiên \
+     tại địa chỉ 25/8/4 Lý Thường Kiệt, Phường 4, quận Gò Vấp do Ông Vũ Duy Mạnh làm đại diện nếu có vi phạm, đồng thời phản hồi cho Sở Y tế và cơ quan báo chí được biết./.'
 ext = Extractor()
 
-# print('lt:')
-# print(ext.get_long_tokens(text))
+print('lt:')
+print(ext.get_long_tokens(text))
+print('Start...')
 
 ners, new_text = ext.merge_name_entities(text)
 print('ners:', ners)
