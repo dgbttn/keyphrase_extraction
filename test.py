@@ -17,7 +17,7 @@ from textrank import TextRankModel
 # print('--------------------------------------------------------------------------')
 # print(preprocessing(c))
 
-# extractor = Extractor()
+extractor = Extractor()
 
 # a_ners, a_candidates = extractor.extract(a)
 # c_ners, c_candidates = extractor.extract(c)
@@ -35,23 +35,26 @@ tr = TextRankModel()
 #     print(kw, '-', point)
 
 
-text = 'Vv phản ánh của Báo Đời sống & Tiêu dùng liên quan đến các dấu hiệu vi phạm của HKD Sắc Mộc Thiên. CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM. Độc lập - Tự do – Hạnh phúc. Thành phố Hồ Chí Minh, ngày tháng năm 2018 .\
- Kính gửi: Ủy ban nhân dân quận Gò Vấp. \
- Sở Y tế nhận được mail của Cơ quan đại diện tại Thành phố Hồ Chí Minh Báo Đời sống & Tiêu dùng về việc phản ánh của bạn đọc tại Thành phố Hồ Chí Minh \
- xuất hiện một số sản phẩm chăm sóc sức khỏe nhãn hiệu Sắc Mộc Thiên (địa chỉ trên sản phẩm: 28/10 Phạm Văn Chiêu, Phường 8, quận Gò Vấp) có dấu hiệu vi phạm quy định trong lĩnh vực Y tế. \
- Được biết, ngay sau khi Ủy ban nhân dân quận Gò Vấp xác minh và trả lời báo chí về việc không tồn tại hoạt động của Hộ kinh doanh Sắc Mộc Thiên \
-do Ông Vũ Duy Mạnh làm đại diện tại địa chỉ số 28/10 Phạm Văn Chiêu, Phường 8, quận Gò Vấp thì Ông Mạnh chấm dứt hoạt động Hộ kinh doanh tại địa chỉ trên \
-và thành lập Hộ kinh doanh Sắc Mộc Thiên tại địa chỉ 25/8/4 Lý Thường Kiệt, Phường 4, quận Gò Vấp. \
- Sở Y tế đề nghị Ủy ban nhân dân quận Gò Vấp tiếp tục giám sát hoạt động, kiểm tra, xử lý đối với Hộ kinh doanh Sắc Mộc Thiên \
-     tại địa chỉ 25/8/4 Lý Thường Kiệt, Phường 4, quận Gò Vấp do Ông Vũ Duy Mạnh làm đại diện nếu có vi phạm, đồng thời phản hồi cho Sở Y tế và cơ quan báo chí được biết./.'
-ext = Extractor()
+about = read_text_file('datasets/data_original_files0-9999/1942_about.txt')
+print('about:', about)
+about = preprocessing(about)
+print('verb phrase:', extractor.get_long_tokens(about, pos_tags=('V')))
+print('noun phrase:', extractor.get_long_tokens(about))
+print('named entities:', extractor._get_named_entities(extractor._ner(about)))
+print('annotated:', extractor._pos_tagging(about))
+
+text = read_text_file('datasets/data_original_files0-9999/1942_content.txt')
+text = preprocessing(text)
 
 print('lt:')
-print(ext.get_long_tokens(text))
+print(extractor.get_long_tokens(text))
 print('Start...')
 
-ners, new_text = ext.merge_name_entities(text)
+ners, new_text = extractor.merge_name_entities(text)
 print('ners:', ners)
-keywords = tr.get_keywords(new_text, number=20, window_size=3)
+keywords = tr.get_keywords(new_text, number=50, window_size=3)
+# print(new_text)
 for kw, point in keywords:
     print(kw, '-', point)
+
+extractor.stop()

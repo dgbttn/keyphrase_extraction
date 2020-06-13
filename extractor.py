@@ -22,6 +22,9 @@ class Extractor:
         print('Init VnCoreNLP Annotator...')
         self.annotator = VnCoreNLP(jarfile, annotators="wseg,pos,ner,parse", max_heap_size='-Xmx2g')
 
+    def stop(self):
+        self.annotator.close()
+
     def _pos_tagging(self, text):
         pos_tagged_text = self.annotator.pos_tag(text)
         return pos_tagged_text
@@ -80,7 +83,7 @@ class Extractor:
         annotated_doc = self.annotator.annotate(doc)
         return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent] for sent in annotated_doc['sentences']]
 
-    def get_long_tokens(self, doc, pos_tags=('N', 'Ny', 'Np', 'Y')):
+    def get_long_tokens(self, doc, pos_tags=('N', 'Ny', 'Np', 'Y', 'M', 'Z')):
         annotated_doc = self.annotate(doc)
         eos = Token('.', '.', '.')  # end of sentence
         long_tokens = []
@@ -103,9 +106,10 @@ class Extractor:
         ners = self._get_named_entities(remake_doc)
         new_doc = []
         for sent in annotated_doc:
-            raw_sent = ' '.join([token.form for token in sent])
+            raw_sent = ' '.join([token.form for token in sent]).lower()
             pos_tags = [token.posTag for token in sent]
             for ner, _ in ners:
+                ner = ner.lower()
                 i = raw_sent.find(ner)
                 while i > -1 and ner.count(' ') > 0:
                     raw_sent = raw_sent.replace(ner, ner.replace(' ', '_'), 1)
@@ -115,10 +119,10 @@ class Extractor:
 
             new_sent = raw_sent.split(' ')
             if len(new_sent) != len(pos_tags):
-                print(len(new_sent))
-                print(new_sent)
-                print(len(pos_tags))
-                print(pos_tags)
+                # print(len(new_sent))
+                # print(new_sent)
+                # print(len(pos_tags))
+                # print(pos_tags)
                 raise Exception('Wrong went merge NE')
             new_doc.append([(new_sent[i], pos_tags[i]) for i in range(len(new_sent))])
         return ners, self._lemmatize(new_doc)
