@@ -10,6 +10,7 @@ def remove_punctuations(text):
 
 
 def standardize(text):
+    text = text.replace('–', '-')
     text = text.replace('-', ' - ')
     return re.sub(r'\s+', ' ', text).strip()
 

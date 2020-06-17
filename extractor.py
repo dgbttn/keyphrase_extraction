@@ -1,4 +1,5 @@
 from vncorenlp import VnCoreNLP
+from wordbook import popular_prefix_named_entity
 
 
 ORGANIZATION = 'ORG'
@@ -33,7 +34,7 @@ class Extractor:
         ner_text = self.annotator.ner(text)
         return ner_text
 
-    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'V', 'M', 'Y')):
+    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'V', 'M', 'Y', 'A')):
         sentences = []
         for sent in doc:
             new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
@@ -83,8 +84,9 @@ class Extractor:
         annotated_doc = self.annotator.annotate(doc)
         return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent] for sent in annotated_doc['sentences']]
 
-    def get_long_tokens(self, doc, pos_tags=('N', 'Ny', 'Np', 'Y', 'M', 'Z')):
-        annotated_doc = self.annotate(doc)
+    def get_long_tokens(
+            self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Y', 'M', 'Z', 'A'),
+            min_word_number=2, max_word_count=20):
         eos = Token('.', '.', '.')  # end of sentence
         long_tokens = []
         tokens = []
@@ -95,13 +97,12 @@ class Extractor:
                 if token.posTag in pos_tags:
                     tokens.append(token.form)
                 else:
-                    if len(tokens) > 1:
+                    if len(tokens) > min_word_number and len(tokens) < max_word_count:
                         long_tokens.append(' '.join(tokens))
                     tokens = []
         return long_tokens
 
-    def merge_name_entities(self, doc):
-        annotated_doc = self.annotate(doc)
+    def merge_name_entities(self, annotated_doc):
         remake_doc = [[(token.form, token.nerLabel) for token in sent] for sent in annotated_doc]
         ners = self._get_named_entities(remake_doc)
         new_doc = []
@@ -119,10 +120,33 @@ class Extractor:
 
             new_sent = raw_sent.split(' ')
             if len(new_sent) != len(pos_tags):
-                # print(len(new_sent))
-                # print(new_sent)
-                # print(len(pos_tags))
-                # print(pos_tags)
                 raise Exception('Wrong went merge NE')
             new_doc.append([(new_sent[i], pos_tags[i]) for i in range(len(new_sent))])
         return ners, self._lemmatize(new_doc)
+
+    def merge_popular_noun_phrases(self, tokenized_doc, noun_phrases=()):
+        new_doc = []
+        for sent in tokenized_doc:
+            raw_sent = ' '.join(sent).lower()
+            for np in noun_phrases:
+                np = np.lower()
+                raw_sent = raw_sent.replace(np, np.replace(' ', '_'))
+            new_sent = raw_sent.split(' ')
+            new_doc.append(new_sent)
+        return new_doc
+
+    def analyse_about(self, about):
+        annotated_doc = self.annotate(about)
+        noun_phrases = self.get_long_tokens(annotated_doc)
+        phrases = self.get_long_tokens(annotated_doc, pos_tags=('N, A, V'), min_word_number=3)
+        named_entities, _ = self.merge_name_entities(annotated_doc)
+        return noun_phrases, phrases, named_entities
+
+    def analyse_content(self, doc):
+        annotated_doc = self.annotate(doc)
+        noun_phrases = self.get_long_tokens(annotated_doc)
+        named_entities, tokenized_doc = self.merge_name_entities(annotated_doc)
+        popular_noun_phrases = {p for p in noun_phrases if any(
+            popular_prefix in p for popular_prefix in popular_prefix_named_entity)}
+        merged_doc = self.merge_popular_noun_phrases(tokenized_doc, noun_phrases=popular_noun_phrases)
+        return merged_doc, noun_phrases, named_entities

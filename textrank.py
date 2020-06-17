@@ -10,7 +10,7 @@ class TextRankModel:
         self.vocab = None
         self.ignored_words = []
 
-    def init_wordbook(self, ignored_words=()):
+    def set_ignored_words(self, ignored_words=()):
         self.ignored_words = ignored_words
 
     def _generate_vocab(self, doc):
