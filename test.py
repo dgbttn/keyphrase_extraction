@@ -3,11 +3,13 @@ from finalize import extract_about, extract_content
 
 
 for i, corpus in enumerate(wb.corpora):
+    print(i)
     about, content = corpus
     if not about.text or not content.tokenized_text:
         continue
     about_keyphrases = extract_about(about)
     ne_keyphrases, keywords = extract_content(content)
+    print(len(about_keyphrases), len(ne_keyphrases), len(keywords))
 
 
 # about = read_text_file('datasets/data_original_files0-9999/5612_about.txt')

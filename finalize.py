@@ -87,7 +87,7 @@ def _in_any_item_of_list(array, substr):
 def extract_about(about):
     about.noun_phrases = merge_phrase_list(about.noun_phrases)
     about.phrases = merge_phrase_list(about.phrases)
-    phrases = merge_phrase_list(set(about.noun_phrases + about.phrases))
+    phrases = merge_phrase_list({*about.noun_phrases, *about.phrases})
     organizations = {word for word, tag in about.named_entities if tag == ORGANIZATION}
 
     keyphrases = []

@@ -6,20 +6,20 @@ popular_prefix_named_entity = ('sở', 'uỷ_ban_nhân_dân', 'ủy_ban_nhân_d�
 
 
 class About:
-    def __init__(self, file_name='', text='', noun_phrases=(), phrases=(), named_entites=()):
+    def __init__(self, file_name='', text='', noun_phrases=(), phrases=(), named_entities=()):
         self.file_name = file_name
         self.text = text
-        self.noun_phrases = noun_phrases
-        self.phrases = phrases
-        self.named_entites = named_entites
+        self.noun_phrases = set(noun_phrases)
+        self.phrases = set(phrases)
+        self.named_entities = set(named_entities)
 
 
 class Content:
     def __init__(self, file_name='', tokenized_text=(), noun_phrases=(), named_entities=()):
         self.file_name = file_name
         self.tokenized_text = tokenized_text
-        self.noun_phrases = noun_phrases
-        self.named_entites = named_entities
+        self.noun_phrases = set(noun_phrases)
+        self.named_entities = set(named_entities)
 
 
 class Wordbook:
@@ -39,7 +39,7 @@ class Wordbook:
             text=about_text,
             noun_phrases=noun_phrases,
             phrases=phrases,
-            named_entites=named_entities
+            named_entities=named_entities
         )
 
     def make_content(self, file_path):
@@ -56,7 +56,7 @@ class Wordbook:
 
     def extract_corpora(self, candidate_extractor):
         self.extractor = candidate_extractor
-        for a, c in self.file_list:
+        for a, c in self.file_list[:100]:
             try:
                 about = self.make_about(a)
                 content = self.make_content(c)
