@@ -2,7 +2,8 @@ from reader import get_file_list, read_text_file
 from preprocessing import preprocessing
 
 
-popular_prefix_named_entity = ('sở', 'uỷ_ban_nhân_dân', 'ủy_ban_nhân_dân')
+popular_prefix_named_entity = ('sở', 'uỷ_ban_nhân_dân', 'ủy_ban_nhân_dân', 'uỷ ban_nhân_dân', 'ủy ban_nhân_dân')
+popular_phrase_part = ('ngày', 'cộng hòa', 'xã hội chủ nghĩa việt nam', 'độc lập', ' tự do', 'hạnh phúc')
 
 
 class About:

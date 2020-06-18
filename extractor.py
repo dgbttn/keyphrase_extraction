@@ -1,5 +1,5 @@
 from vncorenlp import VnCoreNLP
-from wordbook import popular_prefix_named_entity
+from wordbook import popular_prefix_named_entity, popular_phrase_part
 
 
 ORGANIZATION = 'ORG'
@@ -34,7 +34,7 @@ class Extractor:
         ner_text = self.annotator.ner(text)
         return ner_text
 
-    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'V', 'M', 'Y', 'A')):
+    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'V', 'Y', 'A')):
         sentences = []
         for sent in doc:
             new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
@@ -82,7 +82,7 @@ class Extractor:
 
     def annotate(self, doc):
         annotated_doc = self.annotator.annotate(doc)
-        return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent] for sent in annotated_doc['sentences']]
+        return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent if word['form'].upper() != word['form'] or len(word['form']) < 5] for sent in annotated_doc['sentences']]
 
     def get_long_tokens(
             self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Y', 'M', 'Z', 'A'),
@@ -97,7 +97,8 @@ class Extractor:
                 if token.posTag in pos_tags:
                     tokens.append(token.form)
                 else:
-                    if len(tokens) > min_word_number and len(tokens) < max_word_count:
+                    if len(tokens) > min_word_number and len(tokens) < max_word_count and not any(
+                            p in ' '.join(tokens).lower() for p in popular_phrase_part):
                         long_tokens.append(' '.join(tokens))
                     tokens = []
         return long_tokens
@@ -138,7 +139,7 @@ class Extractor:
     def analyse_about(self, about):
         annotated_doc = self.annotate(about)
         noun_phrases = self.get_long_tokens(annotated_doc)
-        phrases = self.get_long_tokens(annotated_doc, pos_tags=('N, A, V'), min_word_number=3)
+        phrases = self.get_long_tokens(annotated_doc, pos_tags=('N, Np, A, V'), min_word_number=3)
         named_entities, _ = self.merge_name_entities(annotated_doc)
         return noun_phrases, phrases, named_entities
 

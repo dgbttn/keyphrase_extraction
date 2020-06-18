@@ -76,8 +76,12 @@ def _in(bounder, substr):
     return substr.lower() in bounder.lower()
 
 
-def _in_list(array, substr):
-    return substr.lower() in [word.lower() for word in array]
+def _in_list(array, string, ratio=0.99):
+    for array_item in array:
+        _, common_ratio = longest_common_substring(string, array_item)
+        if common_ratio > ratio:
+            return True
+    return False
 
 
 def _in_any_item_of_list(array, substr):
@@ -120,18 +124,21 @@ def extract_content(content):
     # keyphrases contain organization
     for org in organizations:
         for phrase in phrases:
-            if _in(phrase, org) and not _in_list(named_entity_keyphrases, phrase):
+            if _in(phrase, org) and not _in_list(named_entity_keyphrases, phrase, 0.6):
                 named_entity_keyphrases.append(phrase)
     # keyphrases is organization
     for org in organizations:
         if not _in_any_item_of_list(named_entity_keyphrases, org):
             named_entity_keyphrases.append(org)
+
     # keyphrase contain other type named entities
-    for ne, _ in content.named_entities:
-        for phrase in phrases:
-            if _in(phrase, ne) and not _in_list(named_entity_keyphrases, phrase):
-                named_entity_keyphrases.append(phrase)
+    if len(named_entity_keyphrases) < 7:
+        for ne, _ in content.named_entities:
+            for phrase in phrases:
+                if _in(phrase, ne) and not _in_list(named_entity_keyphrases, phrase):
+                    named_entity_keyphrases.append(phrase)
 
     keywords = tr.get_keywords(content.tokenized_text, number=50, window_size=3)
+    keywords2 = tr.get_keywords_then_ignore(content.tokenized_text, number=50, window_size=3)
 
-    return named_entity_keyphrases, keywords
+    return named_entity_keyphrases, keywords, keywords2

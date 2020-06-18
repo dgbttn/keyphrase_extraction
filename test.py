@@ -8,7 +8,7 @@ for i, corpus in enumerate(wb.corpora):
     if not about.text or not content.tokenized_text:
         continue
     about_keyphrases = extract_about(about)
-    ne_keyphrases, keywords = extract_content(content)
+    ne_keyphrases, keywords, keywords2 = extract_content(content)
     print(len(about_keyphrases), len(ne_keyphrases), len(keywords))
 
 
