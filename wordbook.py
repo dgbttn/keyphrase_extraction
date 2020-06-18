@@ -75,7 +75,7 @@ class Wordbook:
 
         self.extractor.stop()
 
-    def set_ignore_words(self, min_df_count=2, max_df=0.50):
+    def set_ignored_words(self, min_df_count=2, max_df=0.50):
         term_document = sorted(self.vocab.items(), key=lambda x: x[1])
         n = len(self.corpora)
-        self.ignore_words = [word for word, df in term_document if df <= min_df_count or df/n >= max_df]
+        self.ignored_words = [word for word, df in term_document if df <= min_df_count or df/n >= max_df]

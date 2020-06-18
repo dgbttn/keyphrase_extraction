@@ -7,9 +7,9 @@ dataset = 'datasets/data_original_files0-9999'
 extractor = Extractor()
 wb = Wordbook(folder_path=dataset)
 wb.extract_corpora(extractor)
-wb.set_ignore_words(min_df_count=1, max_df=0.80)
+wb.set_ignored_words(min_df_count=1, max_df=0.80)
 tr = TextRankModel()
-tr.set_ignored_words(wb.ignore_words)
+tr.set_ignored_words(wb.ignored_words)
 
 output_path = 'output'
 if not os.path.isdir(output_path):
