@@ -139,7 +139,7 @@ class Extractor:
     def analyse_about(self, about):
         annotated_doc = self.annotate(about)
         noun_phrases = self.get_long_tokens(annotated_doc)
-        phrases = self.get_long_tokens(annotated_doc, pos_tags=('N, Np, A, V'), min_word_number=3)
+        phrases = self.get_long_tokens(annotated_doc, pos_tags=('N', 'Np', 'A', 'V'), min_word_number=3)
         named_entities, _ = self.merge_name_entities(annotated_doc)
         return noun_phrases, phrases, named_entities
 
