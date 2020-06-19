@@ -3,8 +3,8 @@ from main import tr
 
 
 def longest_common_substring(string1, string2):
-    string1 = string1.lower()
-    string2 = string2.lower()
+    string1 = string1.lower() + '$'
+    string2 = string2.lower() + '#'
     answer = ""
     len1, len2 = len(string1), len(string2)
     for i in range(len1):
@@ -16,7 +16,7 @@ def longest_common_substring(string1, string2):
                 if len(match) > len(answer):
                     answer = match
                 match = ""
-    return answer, len(answer)/min(len(string1), len(string2))
+    return answer, len(answer)/min(len1, len2)
 
 
 def merge_2_phrases(phrase1, phrase2, substring):

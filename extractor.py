@@ -85,7 +85,7 @@ class Extractor:
         return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent if word['form'].upper() != word['form'] or len(word['form']) < 5] for sent in annotated_doc['sentences']]
 
     def get_long_tokens(
-            self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Y', 'M', 'Z', 'A'),
+            self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Nc', 'Y', 'M', 'Z', 'A'),
             min_word_number=2, max_word_count=20):
         eos = Token('.', '.', '.')  # end of sentence
         long_tokens = []

@@ -2,8 +2,23 @@ from reader import get_file_list, read_text_file
 from preprocessing import preprocessing
 
 
-popular_prefix_named_entity = ('sở', 'uỷ_ban_nhân_dân', 'ủy_ban_nhân_dân', 'uỷ ban_nhân_dân', 'ủy ban_nhân_dân')
-popular_phrase_part = ('ngày', 'cộng hòa', 'xã hội chủ nghĩa việt nam', 'độc lập', ' tự do', 'hạnh phúc')
+popular_prefix_named_entity = {
+    'sở',
+    'uỷ_ban_nhân_dân',
+    'ủy_ban_nhân_dân',
+    'uỷ ban_nhân_dân',
+    'ủy ban_nhân_dân'
+}
+popular_phrase_part = {
+    'khẩn',
+    'kính',
+    'ngày',
+    'cộng hòa',
+    'xã hội chủ nghĩa việt nam',
+    'độc lập',
+    ' tự do',
+    'hạnh phúc'
+}
 
 
 class About:
@@ -30,10 +45,10 @@ class Wordbook:
         self.vocab = {}  # number of document that term in
         self.file_list = get_file_list(self.folder_path)
 
-    def make_about(self, file_path):
+    def make_about(self, file_path, extractor):
         about_text = read_text_file(file_path=file_path)
         about_text = preprocessing(about_text)
-        noun_phrases, phrases, named_entities = self.extractor.analyse_about(about_text)
+        noun_phrases, phrases, named_entities = extractor.analyse_about(about_text)
         file_name = file_path.split('/')[-1]
         return About(
             file_name=file_name,
@@ -43,10 +58,10 @@ class Wordbook:
             named_entities=named_entities
         )
 
-    def make_content(self, file_path):
+    def make_content(self, file_path, extractor):
         content_text = read_text_file(file_path=file_path)
         content_text = preprocessing(content_text)
-        tokenized_text, noun_phrases, named_entities = self.extractor.analyse_content(content_text)
+        tokenized_text, noun_phrases, named_entities = extractor.analyse_content(content_text)
         file_name = file_path.split('/')[-1]
         return Content(
             file_name=file_name,
@@ -56,11 +71,10 @@ class Wordbook:
         )
 
     def extract_corpora(self, candidate_extractor):
-        self.extractor = candidate_extractor
         for a, c in self.file_list[:100]:
             try:
-                about = self.make_about(a)
-                content = self.make_content(c)
+                about = self.make_about(a, candidate_extractor)
+                content = self.make_content(c, candidate_extractor)
             except Exception as e:
                 about = About(file_name=a.split('/')[-1])
                 content = Content(file_name=c.split('/')[-1])
@@ -73,8 +87,6 @@ class Wordbook:
                 word_list = {word for sent in content.tokenized_text for word in sent}
                 for word in word_list:
                     self.vocab[word] = self.vocab.get(word, 0) + 1
-
-        self.extractor.stop()
 
     def set_ignored_words(self, min_df_count=2, max_df=0.50):
         term_document = sorted(self.vocab.items(), key=lambda x: x[1])
