@@ -92,12 +92,12 @@ class Extractor:
         tokens = []
         for sent in annotated_doc:
             tokens = []
-            sent += [eos]
+            sent.append(eos)
             for token in sent:
                 if token.posTag in pos_tags:
                     tokens.append(token.form)
                 else:
-                    if len(tokens) > min_word_number and len(tokens) < max_word_count and not any(
+                    if len(tokens) >= min_word_number and len(tokens) <= max_word_count and not any(
                             p in ' '.join(tokens).lower() for p in popular_phrase_part):
                         long_tokens.append(' '.join(tokens))
                     tokens = []
@@ -148,6 +148,6 @@ class Extractor:
         noun_phrases = self.get_long_tokens(annotated_doc)
         named_entities, tokenized_doc = self.merge_name_entities(annotated_doc)
         popular_noun_phrases = {p for p in noun_phrases if any(
-            popular_prefix in p for popular_prefix in popular_prefix_named_entity)}
+            popular_prefix in p.lower() for popular_prefix in popular_prefix_named_entity)}
         merged_doc = self.merge_popular_noun_phrases(tokenized_doc, noun_phrases=popular_noun_phrases)
         return merged_doc, noun_phrases, named_entities

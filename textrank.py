@@ -89,3 +89,15 @@ class TextRankModel:
             if i >= number:
                 break
         return keywords
+
+    def get_keywords_then_ignore(self, doc, number=10, window_size=4):
+        node_weights = self._analyze(doc, window_size)
+        node_weights = sorted(node_weights.items(), key=lambda t: t[1], reverse=True)
+
+        keywords = []
+        for i, (key, value) in enumerate(node_weights):
+            if key not in self.ignored_words:
+                keywords.append((key, str(value)))
+                if i >= number:
+                    break
+        return keywords

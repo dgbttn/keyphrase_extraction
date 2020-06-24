@@ -7,7 +7,8 @@ popular_prefix_named_entity = {
     'uỷ_ban_nhân_dân',
     'ủy_ban_nhân_dân',
     'uỷ ban_nhân_dân',
-    'ủy ban_nhân_dân'
+    'ủy ban_nhân_dân',
+    'ubnd'
 }
 popular_phrase_part = {
     'khẩn',
@@ -25,17 +26,17 @@ class About:
     def __init__(self, file_name='', text='', noun_phrases=(), phrases=(), named_entities=()):
         self.file_name = file_name
         self.text = text
-        self.noun_phrases = set(noun_phrases)
-        self.phrases = set(phrases)
-        self.named_entities = set(named_entities)
+        self.noun_phrases = noun_phrases
+        self.phrases = phrases
+        self.named_entities = named_entities
 
 
 class Content:
     def __init__(self, file_name='', tokenized_text=(), noun_phrases=(), named_entities=()):
         self.file_name = file_name
         self.tokenized_text = tokenized_text
-        self.noun_phrases = set(noun_phrases)
-        self.named_entities = set(named_entities)
+        self.noun_phrases = noun_phrases
+        self.named_entities = named_entities
 
 
 class Wordbook:
@@ -44,6 +45,7 @@ class Wordbook:
         self.corpora = []
         self.vocab = {}  # number of document that term in
         self.file_list = get_file_list(self.folder_path)
+        self.ignored_words = ()
 
     def make_about(self, file_path, extractor):
         about_text = read_text_file(file_path=file_path)
@@ -71,7 +73,7 @@ class Wordbook:
         )
 
     def extract_corpora(self, candidate_extractor):
-        for a, c in self.file_list[:100]:
+        for a, c in self.file_list:
             try:
                 about = self.make_about(a, candidate_extractor)
                 content = self.make_content(c, candidate_extractor)
@@ -91,4 +93,4 @@ class Wordbook:
     def set_ignored_words(self, min_df_count=2, max_df=0.50):
         term_document = sorted(self.vocab.items(), key=lambda x: x[1])
         n = len(self.corpora)
-        self.ignored_words = [word for word, df in term_document if df <= min_df_count or df/n >= max_df]
+        self.ignored_words = {word for word, df in term_document if df < min_df_count or df/n >= max_df}
