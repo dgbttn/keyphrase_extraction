@@ -78,10 +78,12 @@ class TextRankModel:
         return node_weights
 
     def get_keywords(self, doc, number=10, window_size=4):
-        doc = [[w for w in sent if w not in self.ignored_words] for sent in doc]
+        doc = [[w for w in sent if w not in self.ignored_words]
+               for sent in doc]
 
         node_weights = self._analyze(doc, window_size)
-        node_weights = sorted(node_weights.items(), key=lambda t: t[1], reverse=True)
+        node_weights = sorted(node_weights.items(),
+                              key=lambda t: t[1], reverse=True)
 
         keywords = []
         for i, (key, value) in enumerate(node_weights):
@@ -92,7 +94,8 @@ class TextRankModel:
 
     def get_keywords_then_ignore(self, doc, number=10, window_size=4):
         node_weights = self._analyze(doc, window_size)
-        node_weights = sorted(node_weights.items(), key=lambda t: t[1], reverse=True)
+        node_weights = sorted(node_weights.items(),
+                              key=lambda t: t[1], reverse=True)
 
         keywords = []
         for i, (key, value) in enumerate(node_weights):

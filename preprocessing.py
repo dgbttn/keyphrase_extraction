@@ -9,15 +9,19 @@ def remove_punctuations(text):
     return re.sub(r'\s+', ' ', text).strip()
 
 
+def sentence_segmenting(text):
+    text = re.sub(r'\n{2,}', '. ', text)
+    return text
+
+
 def standardize(text):
     text = text.replace('–', '-')
     text = text.replace('-', ' - ')
-    return re.sub(r'\s+', ' ', text).strip()
+    return text
 
 
 def get_main_text(text):
     text = re.sub(r'\|[^\n]*\|', '', text)
-    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
 
@@ -31,4 +35,5 @@ def preprocessing(text):
 
     text = remove_punctuations(text)
     text = standardize(text)
+    text = re.sub(r'\s+', ' ', text).strip()
     return text
