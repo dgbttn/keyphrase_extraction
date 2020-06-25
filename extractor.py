@@ -34,7 +34,7 @@ class Extractor:
         ner_text = self.annotator.ner(text)
         return ner_text
 
-    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'V', 'Y', 'A')):
+    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'Nc', 'V', 'Z', 'Y', 'A')):
         sentences = []
         for sent in doc:
             new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
@@ -82,7 +82,7 @@ class Extractor:
 
     def annotate(self, doc):
         annotated_doc = self.annotator.annotate(doc)
-        return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent if word['form'].upper() != word['form'] or len(word['form']) < 5] for sent in annotated_doc['sentences']]
+        return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent] for sent in annotated_doc['sentences']]
 
     def get_long_tokens(
             self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Nc', 'Y', 'M', 'Z', 'A'),
@@ -123,17 +123,26 @@ class Extractor:
             if len(new_sent) != len(pos_tags):
                 raise Exception('Wrong went merge NE')
             new_doc.append([(new_sent[i], pos_tags[i]) for i in range(len(new_sent))])
-        return ners, self._lemmatize(new_doc)
+        return ners, new_doc
 
     def merge_popular_noun_phrases(self, tokenized_doc, noun_phrases=()):
         new_doc = []
         for sent in tokenized_doc:
-            raw_sent = ' '.join(sent).lower()
+            raw_sent = ' '.join([word for word, tag in sent]).lower()
+            pos_tags = [tag for word, tag in sent]
             for np in noun_phrases:
                 np = np.lower()
+                i = raw_sent.find(np)
+                while i > -1 and np.count(' ') > 0:
+                    raw_sent = raw_sent.replace(np, np.replace(' ', '_'), 1)
+                    i = raw_sent.count(' ', 0, i)
+                    pos_tags[i: i+np.count(' ')+1] = ['N']
+                    i = raw_sent.find(np)
                 raw_sent = raw_sent.replace(np, np.replace(' ', '_'))
             new_sent = raw_sent.split(' ')
-            new_doc.append(new_sent)
+            if len(new_sent) != len(pos_tags):
+                raise Exception('Wrong went merge NE')
+            new_doc.append([(new_sent[i], pos_tags[i]) for i in range(len(new_sent))])
         return new_doc
 
     def analyse_about(self, about):
@@ -146,8 +155,8 @@ class Extractor:
     def analyse_content(self, doc):
         annotated_doc = self.annotate(doc)
         noun_phrases = self.get_long_tokens(annotated_doc)
-        named_entities, tokenized_doc = self.merge_name_entities(annotated_doc)
+        named_entities, new_doc = self.merge_name_entities(annotated_doc)
         popular_noun_phrases = {p for p in noun_phrases if any(
             popular_prefix in p.lower() for popular_prefix in popular_prefix_named_entity)}
-        merged_doc = self.merge_popular_noun_phrases(tokenized_doc, noun_phrases=popular_noun_phrases)
-        return merged_doc, noun_phrases, named_entities
+        merged_doc = self.merge_popular_noun_phrases(new_doc, noun_phrases=popular_noun_phrases)
+        return self._lemmatize(merged_doc), noun_phrases, named_entities

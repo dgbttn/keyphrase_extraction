@@ -8,16 +8,19 @@ popular_prefix_named_entity = {
     'ủy_ban_nhân_dân',
     'uỷ ban_nhân_dân',
     'ủy ban_nhân_dân',
+    'uỷ ban nhân_dân',
+    'ủy ban nhân_dân',
     'ubnd'
 }
 popular_phrase_part = {
     'khẩn',
     'kính',
     'ngày',
+    'năm',
     'cộng hòa',
     'xã hội chủ nghĩa việt nam',
     'độc lập',
-    ' tự do',
+    'tự do',
     'hạnh phúc'
 }
 
