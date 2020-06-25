@@ -16,7 +16,6 @@ popular_phrase_part = {
     'khẩn',
     'kính',
     'ngày',
-    'năm',
     'cộng hòa',
     'xã hội chủ nghĩa việt nam',
     'độc lập',
@@ -75,8 +74,9 @@ class Wordbook:
             named_entities=named_entities
         )
 
-    def extract_corpora(self, candidate_extractor):
-        for a, c in self.file_list:
+    def extract_corpora(self, candidate_extractor, length=100000000):
+        length = min(length, len(self.file_list))
+        for a, c in self.file_list[:length]:
             try:
                 about = self.make_about(a, candidate_extractor)
                 content = self.make_content(c, candidate_extractor)
@@ -86,7 +86,7 @@ class Wordbook:
                 print(a, e)
 
             self.corpora.append((about, content))
-            print(len(self.corpora))
+            print(c)
 
             if content.tokenized_text:
                 word_list = {word for sent in content.tokenized_text for word in sent}

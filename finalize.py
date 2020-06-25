@@ -1,22 +1,24 @@
-from extractor import ORGANIZATION
+from extractor import ORGANIZATION, LOCATION
 from main import tr
 
 
 def longest_common_substring(string1, string2):
-    string1 = string1.lower() + '$'
-    string2 = string2.lower() + '#'
-    len1, len2 = len(string1), len(string2)
-    answer = ""
-    for i in range(len1):
-        match = ""
-        for j in range(len2):
-            if (i + j < len1 and string1[i + j] == string2[j]):
-                match += string2[j]
-            else:
-                if len(match) > len(answer):
-                    answer = match
-                match = ""
-    return answer, len(answer)/min(len1-1, len2-1)
+    S = string1.lower()
+    T = string2.lower()
+    m = len(S)
+    n = len(T)
+    counter = [[0]*(n+1) for x in range(m+1)]
+    longest = 0
+    result = ""
+    for i in range(m):
+        for j in range(n):
+            if S[i] == T[j]:
+                c = counter[i][j] + 1
+                counter[i+1][j+1] = c
+                if c > longest:
+                    longest = c
+                    result = S[i-c+1:i+1]
+    return result, len(result)/min(len(S), len(T))
 
 
 def merge_2_phrases(phrase1, phrase2, substring):
@@ -60,15 +62,22 @@ def merge_2_phrases(phrase1, phrase2, substring):
 
 
 def merge_phrase_list(phrases=()):
-    for p1 in phrases:
-        for p2 in phrases:
-            if p1 != p2:
-                substr, ratio = longest_common_substring(p1, p2)
-                if ratio >= 0.40:
-                    phrases.remove(p1)
-                    phrases.remove(p2)
-                    phrases.append(merge_2_phrases(p1, p2, substr))
-                    return merge_phrase_list(phrases)
+    phrases = list(phrases)
+    n = len(phrases)
+    i = 0
+    while i < n:
+        j = i + 1
+        while j < n:
+            p1 = phrases[i]
+            p2 = phrases[j]
+            substr, ratio = longest_common_substring(p1, p2)
+            if ratio >= 0.40:
+                phrases[i] = merge_2_phrases(p1, p2, substr)
+                del phrases[j]
+                j -= 1
+                n -= 1
+            j += 1
+        i += 1
     return phrases
 
 
@@ -113,7 +122,13 @@ def extract_about(about):
     for phrase in phrases:
         if not _in_list(keyphrases, phrase):
             keyphrases.append(phrase)
-    return keyphrases
+    # locations
+    if len(keyphrases) < 3:
+        locations = {word for word, tag in about.named_entities if tag == LOCATION}
+        for loc in locations:
+            if not _in_any_item_of_list(keyphrases, loc):
+                keyphrases.append(loc)
+    return merge_phrase_list(keyphrases)
 
 
 def extract_content(content):
@@ -138,7 +153,7 @@ def extract_content(content):
                 if _in(phrase, ne) and not _in_list(named_entity_keyphrases, phrase):
                     named_entity_keyphrases.append(phrase)
 
-    keywords = tr.get_keywords(content.tokenized_text, number=50, window_size=3)
-    keywords2 = tr.get_keywords_then_ignore(content.tokenized_text, number=50, window_size=3)
+    keywords = tr.get_keywords(content.tokenized_text, number=1000, window_size=3)
+    keywords2 = tr.get_keywords_then_ignore(content.tokenized_text, number=1000, window_size=3)
 
     return named_entity_keyphrases, keywords, keywords2
