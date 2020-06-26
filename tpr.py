@@ -49,7 +49,7 @@ class LDAModel:
         """
 
         topic_distribution = self.model.get_term_topics(word_id=term)
-        return next(filter(lambda idx, value: idx == topic_id, topic_distribution), (0, -1))[1]
+        return next(filter(lambda topic: topic[0] == topic_id, topic_distribution), (0, -1))[1]
 
 
 class TopicalPageRank:
@@ -161,7 +161,7 @@ class TopicalPageRank:
         for word in vocab:
             final_score[word] = sum(weights[i][word] * topic_values[i] for i in range(len(topics)))
 
-        final_score = sorted(final_score.items(), key=lambda k, v: v, reverse=True)
+        final_score = sorted(final_score.items(), key=lambda item: item[1], reverse=True)
 
         keywords = []
         for i, (key, value) in enumerate(final_score):
