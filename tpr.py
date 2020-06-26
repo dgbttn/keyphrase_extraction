@@ -54,7 +54,7 @@ class LDAModel:
 
 class TopicalPageRank:
 
-    def __init__(self, top_n_topics=5, window_size=4, damping=0.85, min_diff=1e-6, steps=20):
+    def __init__(self, window_size=4, damping=0.85, min_diff=1e-6, steps=20):
         self.damping = damping  # damping coefficient
         self.window_size = window_size  # sliding window size
         self.min_diff = min_diff  # convergence threshold
