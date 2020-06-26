@@ -159,4 +159,6 @@ class Extractor:
         popular_noun_phrases = {p for p in noun_phrases if any(
             popular_prefix in p.lower() for popular_prefix in popular_prefix_named_entity)}
         merged_doc = self.merge_popular_noun_phrases(new_doc, noun_phrases=popular_noun_phrases)
+        while len(merged_doc) > 0 and not merged_doc[0]:
+            del merged_doc[1]
         return self._lemmatize(merged_doc), noun_phrases, named_entities

@@ -11,5 +11,5 @@ from extractor import Extractor
 
 # extractor.stop()
 
-tr = TextRankModel()
+tr = TextRankModel(min_diff=1e-6, steps=20)
 # tr.set_ignored_words(wb.ignored_words)

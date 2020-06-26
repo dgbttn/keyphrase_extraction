@@ -27,7 +27,7 @@ def get_main_text(text):
 
 def preprocessing(text):
     text = get_main_text(text)
-    vv = ['V/v', 'v/v', 'Về việc', 'về việc', 'Về', 'về']
+    vv = ['V/v', 'v/v', 'Vv', 'vv', 'Về việc', 'về việc', 'Về', 'về']
     for v in vv:
         if text.startswith(v):
             text = text.replace(v, '', 1)
