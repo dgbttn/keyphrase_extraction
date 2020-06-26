@@ -157,7 +157,7 @@ class TopicalPageRank:
 
         # compute final weights
         final_score = {}
-        vocab = node_weights[0].keys()
+        vocab = weights[0].keys()
         for word in vocab:
             final_score[word] = sum(weights[i][word] * topic_values[i] for i in range(len(topics)))
 
@@ -165,7 +165,7 @@ class TopicalPageRank:
 
         keywords = []
         for i, (key, value) in enumerate(final_score):
-            keywords.append((key, str(value)))
+            keywords.append((key, value))
             if i >= number:
                 break
         return keywords

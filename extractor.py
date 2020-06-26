@@ -86,7 +86,7 @@ class Extractor:
 
     def get_long_tokens(
             self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Nc', 'Y', 'M', 'Z', 'A'),
-            min_word_number=2, max_word_count=20):
+            min_word_number=2, max_word_count=6):
         eos = Token('.', '.', '.')  # end of sentence
         long_tokens = []
         tokens = []
@@ -98,7 +98,7 @@ class Extractor:
                     tokens.append(token.form)
                 else:
                     if len(tokens) >= min_word_number and len(tokens) <= max_word_count and not any(
-                            p in ' '.join(tokens).lower() for p in popular_phrase_part):
+                            p in ' '.join(tokens).lower().replace('_', ' ') for p in popular_phrase_part):
                         long_tokens.append(' '.join(tokens))
                     tokens = []
         return long_tokens
@@ -132,13 +132,13 @@ class Extractor:
             pos_tags = [tag for word, tag in sent]
             for np in noun_phrases:
                 np = np.lower()
-                i = raw_sent.find(np)
-                while i > -1 and np.count(' ') > 0:
-                    raw_sent = raw_sent.replace(np, np.replace(' ', '_'), 1)
-                    i = raw_sent.count(' ', 0, i)
-                    pos_tags[i: i+np.count(' ')+1] = ['N']
-                    i = raw_sent.find(np)
-                raw_sent = raw_sent.replace(np, np.replace(' ', '_'))
+                i = raw_sent.replace('_', ' ').find(np.replace('_', ' '))
+                while i > -1 and np.count(' ') > 0 and raw_sent[i:i+len(np)].count(' ') > 0:
+                    j = raw_sent.count(' ', 0, i)
+                    pos_tags[j: j+raw_sent[i:i+len(np)].count(' ')+1] = ['N']
+                    raw_sent = raw_sent[:i] + np.replace(' ', '_') + raw_sent[i+len(np):]
+                    i = raw_sent[i+1:].replace('_', ' ').find(np.replace('_', ' '))
+
             new_sent = raw_sent.split(' ')
             if len(new_sent) != len(pos_tags):
                 raise Exception('Wrong went merge NE')
@@ -157,7 +157,7 @@ class Extractor:
         noun_phrases = self.get_long_tokens(annotated_doc)
         named_entities, new_doc = self.merge_name_entities(annotated_doc)
         popular_noun_phrases = {p for p in noun_phrases if any(
-            popular_prefix in p.lower() for popular_prefix in popular_prefix_named_entity)}
+            p.lower().startswith(popular_prefix) for popular_prefix in popular_prefix_named_entity)}
         merged_doc = self.merge_popular_noun_phrases(new_doc, noun_phrases=popular_noun_phrases)
         while len(merged_doc) > 0 and not merged_doc[0]:
             del merged_doc[1]

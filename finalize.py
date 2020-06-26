@@ -1,5 +1,5 @@
 from extractor import ORGANIZATION, LOCATION
-from main import tr
+from main import tpr
 
 
 def longest_common_substring(string1, string2):
@@ -131,7 +131,7 @@ def extract_about(about):
     return merge_phrase_list(keyphrases)
 
 
-def extract_content(content):
+def extract_content(index, content):
     phrases = merge_phrase_list(content.noun_phrases)
     organizations = {word for word, tag in content.named_entities if tag == ORGANIZATION}
 
@@ -139,21 +139,47 @@ def extract_content(content):
     # keyphrases contain organization
     for org in organizations:
         for phrase in phrases:
-            if _in(phrase, org) and not _in_list(named_entity_keyphrases, phrase, 0.6):
+            if _in(
+                    phrase, org) and not _in_list(
+                    named_entity_keyphrases, phrase, 0.6) and len(named_entity_keyphrases) < 7:
                 named_entity_keyphrases.append(phrase)
     # keyphrases is organization
     for org in organizations:
-        if not _in_any_item_of_list(named_entity_keyphrases, org):
+        if not _in_any_item_of_list(named_entity_keyphrases, org) and len(named_entity_keyphrases) < 7:
             named_entity_keyphrases.append(org)
 
     # keyphrase contain other type named entities
-    if len(named_entity_keyphrases) < 7:
-        for ne, _ in content.named_entities:
+    for ne, tag in content.named_entities:
+        if tag == LOCATION:
             for phrase in phrases:
-                if _in(phrase, ne) and not _in_list(named_entity_keyphrases, phrase):
+                if _in(phrase, ne) and not _in_list(named_entity_keyphrases, phrase) and len(named_entity_keyphrases) < 7:
                     named_entity_keyphrases.append(phrase)
 
-    keywords = tr.get_keywords(content.tokenized_text, number=1000, window_size=3)
-    keywords2 = tr.get_keywords_then_ignore(content.tokenized_text, number=1000, window_size=3)
+    keywords = tpr.get_keywords(index, content.tokenized_text, number=1000)
 
-    return named_entity_keyphrases, keywords, keywords2
+    return named_entity_keyphrases, keywords
+
+
+def get_keyphrases_decision(index, about, content, topn=10):
+    about_kps = extract_about(about)
+    content_ne_kps, keywords = extract_content(index, content)
+
+    keyphrases = about_kps
+    for ne_kp in content_ne_kps:
+        if not _in_list(keyphrases, ne_kp, ratio=0.6):
+            keyphrases.append(ne_kp)
+
+    sub = []
+    for word, score in keywords:
+        if score < 0.02:
+            break
+        if not _in_any_item_of_list(keyphrases, word):
+            keyphrases.append(word)
+        else:
+            sub.append(word)
+
+    while len(keyphrases) < topn or len(sub) > 0:
+        keyphrases.append(sub[0])
+        del sub[0]
+    
+    return keyphrases
