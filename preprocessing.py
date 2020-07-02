@@ -1,12 +1,4 @@
-import string
 import re
-
-
-def remove_punctuations(text):
-    puncs = set(re.sub(r'[,/.-]', '', string.punctuation))
-    for ch in puncs:
-        text = text.replace(ch, ', ')
-    return text
 
 
 def sentence_segmenting(text):
@@ -33,7 +25,6 @@ def preprocessing(text):
             text = text.replace(v, '', 1)
             break
 
-    text = remove_punctuations(text)
     text = standardize(text)
     text = sentence_segmenting(text)
     text = re.sub(r'\s+', ' ', text).strip()

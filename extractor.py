@@ -1,5 +1,5 @@
 from vncorenlp import VnCoreNLP
-from wordbook import popular_prefix_named_entity, popular_phrase_part
+from wordbook import popular_prefix_named_entity, popular_phrase_part, wrong_entity
 
 
 ORGANIZATION = 'ORG'
@@ -34,12 +34,18 @@ class Extractor:
         ner_text = self.annotator.ner(text)
         return ner_text
 
-    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'Nc', 'V', 'Z', 'Y', 'A')):
+    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'Nc', 'V', 'Z', 'Y')):
         sentences = []
+        ignores = set()
         for sent in doc:
-            new_sent = [word.lower() for (word, tag) in sent if tag in allowed_postags]
+            new_sent = []
+            for word, tag in sent:
+                if tag in allowed_postags:
+                    new_sent.append(word)
+                else:
+                    ignores.add(word)
             sentences.append(new_sent)
-        return sentences
+        return sentences, ignores
 
     def _get_named_entities(self, text):
         endline = ('.', 'O')
@@ -54,7 +60,7 @@ class Extractor:
                 if len(tag) < 3 or tag[-3:] not in NER_TAGS:
                     if entity_segments:
                         entity = ' '.join(entity_segments)
-                        if (entity, old_tag) not in entities:
+                        if (entity, old_tag) not in entities and not (old_tag == PERSON and any(p in entity.lower() for p in wrong_entity)):
                             entities.append((entity, old_tag))
                         entity_segments = []
                         old_tag = ''
@@ -65,7 +71,7 @@ class Extractor:
                 if tag != old_tag:
                     if entity_segments:
                         entity = ' '.join(entity_segments)
-                        if (entity, old_tag) not in entities:
+                        if (entity, old_tag) not in entities and not (old_tag == PERSON and any(p in entity.lower() for p in wrong_entity)):
                             entities.append((entity, old_tag))
                         entity_segments = []
 
@@ -97,9 +103,10 @@ class Extractor:
                 if token.posTag in pos_tags:
                     tokens.append(token.form)
                 else:
+                    new_long_token = ' '.join(tokens).lower()
                     if len(tokens) >= min_word_number and len(tokens) <= max_word_count and not any(
-                            p in ' '.join(tokens).lower().replace('_', ' ') for p in popular_phrase_part):
-                        long_tokens.append(' '.join(tokens))
+                            p in new_long_token.replace('_', ' ') for p in popular_phrase_part):
+                        long_tokens.append(new_long_token)
                     tokens = []
         return long_tokens
 
@@ -125,40 +132,48 @@ class Extractor:
             new_doc.append([(new_sent[i], pos_tags[i]) for i in range(len(new_sent))])
         return ners, new_doc
 
-    def merge_popular_noun_phrases(self, tokenized_doc, noun_phrases=()):
+    def merge_noun_phrases(self, tokenized_doc, noun_phrases=()):
         new_doc = []
         for sent in tokenized_doc:
             raw_sent = ' '.join([word for word, tag in sent]).lower()
             pos_tags = [tag for word, tag in sent]
             for np in noun_phrases:
-                np = np.lower()
                 i = raw_sent.replace('_', ' ').find(np.replace('_', ' '))
-                while i > -1 and np.count(' ') > 0 and raw_sent[i:i+len(np)].count(' ') > 0:
+                while i > -1 and raw_sent[i:i+len(np)].count(' ') > 0:
                     j = raw_sent.count(' ', 0, i)
                     pos_tags[j: j+raw_sent[i:i+len(np)].count(' ')+1] = ['N']
                     raw_sent = raw_sent[:i] + np.replace(' ', '_') + raw_sent[i+len(np):]
                     i = raw_sent[i+1:].replace('_', ' ').find(np.replace('_', ' '))
 
-            new_sent = raw_sent.split(' ')
+            new_sent = raw_sent.split()
             if len(new_sent) != len(pos_tags):
                 raise Exception('Wrong went merge NE')
             new_doc.append([(new_sent[i], pos_tags[i]) for i in range(len(new_sent))])
         return new_doc
 
+    def get_most_noun_phrases(self, noun_phrases, threshold=2):
+        appearances = {}
+        for np in noun_phrases:
+            appearances[np] = appearances.get(np, 0) + 1
+        return {np for np, app in appearances.items() if app >= threshold}
+
     def analyse_about(self, about):
         annotated_doc = self.annotate(about)
-        noun_phrases = self.get_long_tokens(annotated_doc)
-        phrases = self.get_long_tokens(annotated_doc, pos_tags=('N', 'Np', 'A', 'V'), min_word_number=3)
+        noun_phrases = self.get_long_tokens(annotated_doc, min_word_number=2, max_word_count=4)
+        phrases = self.get_long_tokens(
+            annotated_doc, pos_tags=('N', 'Np', 'Nc', 'A', 'V'),
+            min_word_number=2, max_word_count=5)
         named_entities, _ = self.merge_name_entities(annotated_doc)
         return noun_phrases, phrases, named_entities
 
-    def analyse_content(self, doc):
+    def analyse_content(self, doc, noun_phrases_in_about):
         annotated_doc = self.annotate(doc)
-        noun_phrases = self.get_long_tokens(annotated_doc)
         named_entities, new_doc = self.merge_name_entities(annotated_doc)
-        popular_noun_phrases = {p for p in noun_phrases if any(
-            p.lower().startswith(popular_prefix) for popular_prefix in popular_prefix_named_entity)}
-        merged_doc = self.merge_popular_noun_phrases(new_doc, noun_phrases=popular_noun_phrases)
+        noun_phrases = self.get_long_tokens(annotated_doc, min_word_number=2, max_word_count=4)
+        popular_entity_noun_phrases = {p for p in noun_phrases if any(
+            p.startswith(popular_prefix) for popular_prefix in popular_prefix_named_entity)}
+        most_noun_phrases = self.get_most_noun_phrases(noun_phrases + noun_phrases_in_about)
+        merged_doc = self.merge_noun_phrases(new_doc, noun_phrases=popular_entity_noun_phrases | most_noun_phrases)
         while len(merged_doc) > 0 and not merged_doc[0]:
-            del merged_doc[1]
+            del merged_doc[0]
         return self._lemmatize(merged_doc), noun_phrases, named_entities

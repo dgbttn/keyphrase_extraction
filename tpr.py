@@ -71,7 +71,7 @@ class TopicalPageRank:
         cnt = 0
         for sent in doc:
             for word in sent:
-                if word not in vocab:
+                if word not in vocab and word not in self.ignored_words:
                     vocab[word] = cnt
                     cnt += 1
         return vocab
@@ -91,15 +91,19 @@ class TopicalPageRank:
     def _symmetrize(self, a):
         return a + a.T - np.diag(a.diagonal())
 
-    def _get_matrix(self, vocab, token_pairs):
+    def _get_matrix(self, doc, vocab, token_pairs):
         vocab_size = len(vocab)
         g = np.zeros((vocab_size, vocab_size), dtype='float')
 
-        for w1, w2 in token_pairs:
-            i, j = vocab[w1], vocab[w2]
-            g[i][j] = 1
-
-        g = self._symmetrize(g)
+        for sent in doc:
+            for i, word1 in enumerate(sent):
+                for j in range(i+1, i+self.window_size):
+                    if j >= len(sent):
+                        break
+                    word2 = sent[j]
+                    w1, w2 = vocab[word1], vocab[word2]
+                    g[w1][w2] += 1
+                    g[w2][w1] += 1
 
         norm = np.sum(g, axis=0)
         g_norm = np.divide(g, norm, where=norm != 0)
