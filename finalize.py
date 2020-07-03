@@ -1,5 +1,4 @@
 from extractor import ORGANIZATION, LOCATION
-from main import tpr
 
 
 def longest_common_substring(string1, string2):
@@ -102,84 +101,45 @@ def extract_about(about):
     about.phrases = merge_phrase_list(about.phrases)
     phrases = merge_phrase_list({*about.noun_phrases, *about.phrases})
     organizations = {word for word, tag in about.named_entities if tag == ORGANIZATION}
+    locations = {word for word, tag in about.named_entities if tag == LOCATION}
 
     keyphrases = []
-    # keyphrases contain organization
-    for org in organizations:
-        for phrase in phrases:
-            if _in(phrase, org) and not _in_list(keyphrases, phrase):
-                keyphrases.append(phrase)
-    # keyphrases is organization
-    for org in organizations:
-        if not _in_any_item_of_list(keyphrases, org):
+    # keyphrases is organization & location
+    for org in organizations | locations:
+        if not _in_list(keyphrases, org):
             keyphrases.append(org)
-    # keyphrase contain other type named entities
-    for ne, _ in about.named_entities:
-        for phrase in phrases:
-            if _in(phrase, ne) and not _in_list(keyphrases, phrase):
-                keyphrases.append(phrase)
     # remain
     for phrase in phrases:
         if not _in_list(keyphrases, phrase):
             keyphrases.append(phrase)
-    # locations
-    if len(keyphrases) < 3:
-        locations = {word for word, tag in about.named_entities if tag == LOCATION}
-        for loc in locations:
-            if not _in_any_item_of_list(keyphrases, loc):
-                keyphrases.append(loc)
-    return merge_phrase_list(keyphrases)
+
+    return keyphrases
 
 
-def extract_content(index, content):
-    phrases = merge_phrase_list(content.noun_phrases)
+def extract_content(kw_extractor, index, content):
     organizations = {word for word, tag in content.named_entities if tag == ORGANIZATION}
 
-    named_entity_keyphrases = []
-    # keyphrases contain organization
-    for org in organizations:
-        for phrase in phrases:
-            if _in(
-                    phrase, org) and not _in_list(
-                    named_entity_keyphrases, phrase, 0.6) and len(named_entity_keyphrases) < 7:
-                named_entity_keyphrases.append(phrase)
+    keyphrases = []
     # keyphrases is organization
     for org in organizations:
-        if not _in_any_item_of_list(named_entity_keyphrases, org) and len(named_entity_keyphrases) < 7:
-            named_entity_keyphrases.append(org)
+        if not _in_list(keyphrases, org) and len(keyphrases) < 5:
+            keyphrases.append(org)
 
-    # keyphrase contain other type named entities
-    for ne, tag in content.named_entities:
-        if tag == LOCATION:
-            for phrase in phrases:
-                if _in(phrase, ne) and not _in_list(named_entity_keyphrases, phrase) and len(named_entity_keyphrases) < 7:
-                    named_entity_keyphrases.append(phrase)
+    keywords = kw_extractor.get_keywords(index, content.tokenized_text, doc_ignores=content.ignores, number=1000)
 
-    keywords = tpr.get_keywords(index, content.tokenized_text, number=1000)
-
-    return named_entity_keyphrases, keywords
+    return keyphrases, keywords
 
 
-def get_keyphrases_decision(index, about, content, topn=10):
+def get_keyphrases_decision(kw_extractor, index, about, content, topn=10):
     about_kps = extract_about(about)
-    content_ne_kps, keywords = extract_content(index, content)
+    content_kps, keywords = extract_content(kw_extractor, index, content)
+    keyphrases = about_kps + content_kps
 
-    keyphrases = about_kps
-    for ne_kp in content_ne_kps:
-        if not _in_list(keyphrases, ne_kp, ratio=0.6):
-            keyphrases.append(ne_kp)
-
-    sub = []
     for word, score in keywords:
         if score < 0.02:
             break
-        if not _in_any_item_of_list(keyphrases, word):
-            keyphrases.append(word)
-        else:
-            sub.append(word)
+        if len(keyphrases)==topn:
+            break
+        keyphrases.append(word)
 
-    while len(keyphrases) < topn or len(sub) > 0:
-        keyphrases.append(sub[0])
-        del sub[0]
-    
     return keyphrases

@@ -34,15 +34,14 @@ class Extractor:
         ner_text = self.annotator.ner(text)
         return ner_text
 
-    def _lemmatize(self, doc, allowed_postags=('N', 'Ny', 'Np', 'Nc', 'V', 'Z', 'Y')):
+    def _lemmatize(self, doc, allowed_postags=('N', 'Np', 'V')):
         sentences = []
         ignores = set()
         for sent in doc:
             new_sent = []
             for word, tag in sent:
-                if tag in allowed_postags:
-                    new_sent.append(word)
-                else:
+                new_sent.append(word)
+                if tag not in allowed_postags:
                     ignores.add(word)
             sentences.append(new_sent)
         return sentences, ignores
@@ -91,7 +90,7 @@ class Extractor:
         return [[Token(word['form'], word['nerLabel'], word['posTag']) for word in sent] for sent in annotated_doc['sentences']]
 
     def get_long_tokens(
-            self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Nc', 'Y', 'M', 'Z', 'A'),
+            self, annotated_doc, pos_tags=('N', 'Ny', 'Np', 'Nc', 'Y', 'Z', 'A'),
             min_word_number=2, max_word_count=6):
         eos = Token('.', '.', '.')  # end of sentence
         long_tokens = []
@@ -143,7 +142,7 @@ class Extractor:
                     j = raw_sent.count(' ', 0, i)
                     pos_tags[j: j+raw_sent[i:i+len(np)].count(' ')+1] = ['N']
                     raw_sent = raw_sent[:i] + np.replace(' ', '_') + raw_sent[i+len(np):]
-                    i = raw_sent[i+1:].replace('_', ' ').find(np.replace('_', ' '))
+                    i = raw_sent.replace('_', ' ').find(np.replace('_', ' '), i+1)
 
             new_sent = raw_sent.split()
             if len(new_sent) != len(pos_tags):
@@ -155,11 +154,11 @@ class Extractor:
         appearances = {}
         for np in noun_phrases:
             appearances[np] = appearances.get(np, 0) + 1
-        return {np for np, app in appearances.items() if app >= threshold}
+        return [np for np, app in appearances.items() if app >= threshold]
 
     def analyse_about(self, about):
         annotated_doc = self.annotate(about)
-        noun_phrases = self.get_long_tokens(annotated_doc, min_word_number=2, max_word_count=4)
+        noun_phrases = self.get_long_tokens(annotated_doc, min_word_number=2, max_word_count=3)
         phrases = self.get_long_tokens(
             annotated_doc, pos_tags=('N', 'Np', 'Nc', 'A', 'V'),
             min_word_number=2, max_word_count=5)
@@ -170,10 +169,11 @@ class Extractor:
         annotated_doc = self.annotate(doc)
         named_entities, new_doc = self.merge_name_entities(annotated_doc)
         noun_phrases = self.get_long_tokens(annotated_doc, min_word_number=2, max_word_count=4)
-        popular_entity_noun_phrases = {p for p in noun_phrases if any(
-            p.startswith(popular_prefix) for popular_prefix in popular_prefix_named_entity)}
-        most_noun_phrases = self.get_most_noun_phrases(noun_phrases + noun_phrases_in_about)
-        merged_doc = self.merge_noun_phrases(new_doc, noun_phrases=popular_entity_noun_phrases | most_noun_phrases)
+        popular_entity_noun_phrases = [p for p in noun_phrases if any(
+            p.startswith(popular_prefix) for popular_prefix in popular_prefix_named_entity)]
+        most_noun_phrases = self.get_most_noun_phrases(noun_phrases)
+        merged_doc = self.merge_noun_phrases(
+            new_doc, noun_phrases=popular_entity_noun_phrases + noun_phrases_in_about + most_noun_phrases)
         while len(merged_doc) > 0 and not merged_doc[0]:
             del merged_doc[0]
         return self._lemmatize(merged_doc), noun_phrases, named_entities

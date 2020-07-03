@@ -66,41 +66,30 @@ class TopicalPageRank:
         self.lda_model = lda_model
         self.ignored_words = ignored_words
 
-    def _generate_vocab(self, doc):
+    def _get_matrix(self, doc, doc_ignores):
+
+        # local vocabulary of the document
         vocab = {}
         cnt = 0
         for sent in doc:
             for word in sent:
-                if word not in vocab and word not in self.ignored_words:
+                if word not in vocab and word not in self.ignored_words and word not in doc_ignores:
                     vocab[word] = cnt
                     cnt += 1
-        return vocab
+        V = len(vocab)
 
-    def _get_token_pairs(self, doc):
-        token_pairs = []
-        for sent in doc:
-            for i, word in enumerate(sent):
-                for j in range(i+1, i+self.window_size):
-                    if j >= len(sent):
-                        break
-                    pair = (word, sent[j])
-                    if pair not in token_pairs:
-                        token_pairs.append(pair)
-        return token_pairs
-
-    def _symmetrize(self, a):
-        return a + a.T - np.diag(a.diagonal())
-
-    def _get_matrix(self, doc, vocab, token_pairs):
-        vocab_size = len(vocab)
-        g = np.zeros((vocab_size, vocab_size), dtype='float')
+        g = np.zeros((V, V), dtype='float')
 
         for sent in doc:
             for i, word1 in enumerate(sent):
+                if word1 in self.ignored_words or word1 in doc_ignores:
+                    continue
                 for j in range(i+1, i+self.window_size):
                     if j >= len(sent):
                         break
                     word2 = sent[j]
+                    if word2 in self.ignored_words or word2 in doc_ignores:
+                        continue
                     w1, w2 = vocab[word1], vocab[word2]
                     g[w1][w2] += 1
                     g[w2][w1] += 1
@@ -108,16 +97,18 @@ class TopicalPageRank:
         norm = np.sum(g, axis=0)
         g_norm = np.divide(g, norm, where=norm != 0)
 
-        return g_norm
+        return g_norm, vocab
 
-    def _analyze(self, doc, topic_id):
-        local_vocab = self._generate_vocab(doc)
-        token_pairs = self._get_token_pairs(doc)
-        g = self._get_matrix(local_vocab, token_pairs)
+    def _analyze(self, doc, doc_ignores, topic_id):
+        g, local_vocab = self._get_matrix(doc, doc_ignores)
 
         # Init weight (pagerank values)
         V = len(local_vocab)
+        if V == 0:
+            return dict()
+        # pagerank
         start_state = [1.0/V] * V
+        # topical pagerank
         for word, idx in local_vocab.items():
             start_state[idx] = self.lda_model.get_topic_given_term(topic_id, word)
         real_sum = sum(filter(lambda x: x > 0, start_state))
@@ -131,7 +122,7 @@ class TopicalPageRank:
         for _ in range(self.steps):
             new_pr = [1] * V
             for i in range(V):
-                new_pr[i] = (1-self.damping) * start_state[i] + self.damping * sum(g[i][k]*pr[k] for k in range(V))
+                new_pr[i] = (1-self.damping) * start_state[i] + self.damping * sum(g[i][j]*pr[j] for j in range(V))
 
             error_rate = sum(abs(new_pr[i]-pr[i]) for i in range(V))
             if error_rate < self.min_diff:
@@ -146,7 +137,7 @@ class TopicalPageRank:
 
         return node_weights
 
-    def get_keywords(self, doc_idx, doc, number=10):
+    def get_keywords(self, doc_idx, doc, doc_ignores=(), number=10):
         doc = [[w for w in sent if w not in self.ignored_words] for sent in doc]
         doc_bow = self.lda_model.get_doc_bow(doc_idx)
         topics = self.lda_model.get_topics(doc_bow)
@@ -155,7 +146,7 @@ class TopicalPageRank:
         topic_values = []
 
         for topic_id, value in topics:
-            node_weights = self._analyze(doc, topic_id)
+            node_weights = self._analyze(doc, doc_ignores, topic_id)
             weights.append(node_weights)
             topic_values.append(value)
 

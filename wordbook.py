@@ -6,7 +6,8 @@ popular_prefix_named_entity = {
     'sở',
     'uỷ ban nhân dân',
     'ủy ban nhân dân',
-    'ubnd'
+    'ubnd',
+    'ban'
 }
 popular_phrase_part = {
     'khẩn',
