@@ -4,8 +4,8 @@ from gensim import corpora, models
 
 class LDAModel:
 
-    def __init__(self, wordbook_corpora):
-        input_corpora = [content.tokenized_text for about, content in wordbook_corpora]
+    def __init__(self, input_corpora):
+        print('Init LDA...')
         self.flatted_corpora = [[word for sent in corpus for word in sent] for corpus in input_corpora]
         self.dictionary = corpora.Dictionary(self.flatted_corpora)
         # self.dictionary.filter_extremes(no_below=2, no_above=0.65)
@@ -13,6 +13,7 @@ class LDAModel:
         self.model = None
 
     def init_model(self, num_topics=100):
+        print('Setup LDA model...')
         self.model = models.LdaModel(
             corpus=self.bow_corpora,
             num_topics=num_topics,
@@ -138,9 +139,10 @@ class TopicalPageRank:
         return node_weights
 
     def get_keywords(self, doc_idx, doc, doc_ignores=(), number=10):
-        doc = [[w for w in sent if w not in self.ignored_words] for sent in doc]
         doc_bow = self.lda_model.get_doc_bow(doc_idx)
         topics = self.lda_model.get_topics(doc_bow)
+        if len(topics) == 0:
+            return []
 
         weights = []
         topic_values = []

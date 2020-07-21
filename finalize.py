@@ -85,15 +85,20 @@ def _in(bounder, substr):
 
 
 def _in_list(array, string, ratio=0.99):
+    string = string.replace('_', ' ').strip().lower()
     for array_item in array:
-        _, common_ratio = longest_common_substring(string, array_item)
-        if common_ratio > ratio:
+        if array_item.replace('_', ' ').strip().lower() == string:
             return True
     return False
 
 
-def _in_any_item_of_list(array, substr):
-    return any(_in(bounder, substr) for bounder in array)
+def _in_any_item_of_list(array, substr, ratio=0.99):
+    substr = substr.replace('_', ' ').strip().lower()
+    for array_item in array:
+        _, common_ratio = longest_common_substring(substr, array_item)
+        if common_ratio > ratio:
+            return True
+    return False
 
 
 def extract_about(about):
@@ -110,7 +115,7 @@ def extract_about(about):
             keyphrases.append(org)
     # remain
     for phrase in phrases:
-        if not _in_list(keyphrases, phrase):
+        if not _in_list(keyphrases, phrase) and not _in_any_item_of_list(keyphrases, phrase):
             keyphrases.append(phrase)
 
     return keyphrases
@@ -122,7 +127,7 @@ def extract_content(kw_extractor, index, content):
     keyphrases = []
     # keyphrases is organization
     for org in organizations:
-        if not _in_list(keyphrases, org) and len(keyphrases) < 5:
+        if not _in_list(keyphrases, org):
             keyphrases.append(org)
 
     keywords = kw_extractor.get_keywords(index, content.tokenized_text, doc_ignores=content.ignores, number=1000)
@@ -133,13 +138,33 @@ def extract_content(kw_extractor, index, content):
 def get_keyphrases_decision(kw_extractor, index, about, content, topn=10):
     about_kps = extract_about(about)
     content_kps, keywords = extract_content(kw_extractor, index, content)
-    keyphrases = about_kps + content_kps
 
+    keyphrases = []
+
+    for kp in about_kps:
+        kp = kp.replace('_', ' ')
+        if not _in_list(keyphrases, kp):
+            keyphrases.append(kp)
+
+    for kp in content_kps[:int(topn*0.7)-len(keyphrases)]:
+        kp = kp.replace('_', ' ')
+        if not _in_list(keyphrases, kp):
+            keyphrases.append(kp)
+
+    sub = []
     for word, score in keywords:
         if score < 0.02:
             break
-        if len(keyphrases)==topn:
+        if len(keyphrases) == topn:
             break
-        keyphrases.append(word)
+        word = word.replace('_', ' ')
+        if not _in_list(keyphrases, word):
+            keyphrases.append(word)
+        else:
+            sub.append(word)
+
+    while len(keyphrases) < topn and len(sub) > 0:
+        keyphrases.append(sub[0])
+        del sub[0]
 
     return keyphrases

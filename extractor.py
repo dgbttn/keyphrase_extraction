@@ -59,7 +59,7 @@ class Extractor:
                 if len(tag) < 3 or tag[-3:] not in NER_TAGS:
                     if entity_segments:
                         entity = ' '.join(entity_segments)
-                        if (entity, old_tag) not in entities and not (old_tag == PERSON and any(p in entity.lower() for p in wrong_entity)):
+                        if (entity, old_tag) not in entities and not any(p in entity.lower() for p in wrong_entity):
                             entities.append((entity, old_tag))
                         entity_segments = []
                         old_tag = ''
@@ -70,7 +70,7 @@ class Extractor:
                 if tag != old_tag:
                     if entity_segments:
                         entity = ' '.join(entity_segments)
-                        if (entity, old_tag) not in entities and not (old_tag == PERSON and any(p in entity.lower() for p in wrong_entity)):
+                        if (entity, old_tag) not in entities and not any(p in entity.lower() for p in wrong_entity):
                             entities.append((entity, old_tag))
                         entity_segments = []
 
@@ -94,19 +94,21 @@ class Extractor:
             min_word_number=2, max_word_count=6):
         eos = Token('.', '.', '.')  # end of sentence
         long_tokens = []
-        tokens = []
         for sent in annotated_doc:
-            tokens = []
             sent.append(eos)
-            for token in sent:
+            for i, token in enumerate(sent):
                 if token.posTag in pos_tags:
-                    tokens.append(token.form)
-                else:
-                    new_long_token = ' '.join(tokens).lower()
-                    if len(tokens) >= min_word_number and len(tokens) <= max_word_count and not any(
-                            p in new_long_token.replace('_', ' ') for p in popular_phrase_part):
-                        long_tokens.append(new_long_token)
-                    tokens = []
+                    tokens = [token.form]
+                    for next_token in sent[i+1:]:
+                        if next_token.posTag in pos_tags:
+                            tokens.append(next_token.form)
+                        else:
+                            new_long_token = ' '.join(tokens).lower()
+                            if len(tokens) >= min_word_number and len(tokens) <= max_word_count and not any(
+                                p in new_long_token.replace('_', ' ') for p in popular_phrase_part) and not any(
+                                    new_long_token in p for p in long_tokens):
+                                long_tokens.append(new_long_token)
+                            break
         return long_tokens
 
     def merge_name_entities(self, annotated_doc):
@@ -158,7 +160,7 @@ class Extractor:
 
     def analyse_about(self, about):
         annotated_doc = self.annotate(about)
-        noun_phrases = self.get_long_tokens(annotated_doc, min_word_number=2, max_word_count=3)
+        noun_phrases = self.get_long_tokens(annotated_doc, min_word_number=2, max_word_count=4)
         phrases = self.get_long_tokens(
             annotated_doc, pos_tags=('N', 'Np', 'Nc', 'A', 'V'),
             min_word_number=2, max_word_count=5)

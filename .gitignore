@@ -3,3 +3,4 @@ __pycache__/*
 papers/*
 models
 VnCoreNLP-1.1.1.jar
+test_output

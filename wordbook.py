@@ -7,7 +7,10 @@ popular_prefix_named_entity = {
     'uỷ ban nhân dân',
     'ủy ban nhân dân',
     'ubnd',
-    'ban'
+    'ban',
+    'hội',
+    'chi hội',
+    'chương trình'
 }
 popular_phrase_part = {
     'khẩn',
@@ -24,7 +27,9 @@ popular_phrase_part = {
 wrong_entity = {
     'khẩn',
     'kính',
-    'lưu'
+    'lưu',
+    'cộng hòa',
+    'xã hội chủ nghĩa việt nam'
 }
 
 
@@ -52,7 +57,7 @@ class Wordbook:
         self.corpora = []
         self.vocab = {}  # number of document that term in
         self.file_list = get_file_list(self.folder_path)
-        self.ignored_words = ()
+        self.ignored_words = {}
         self.file2id = {}
 
     def make_about(self, file_path, extractor):
@@ -68,10 +73,10 @@ class Wordbook:
             named_entities=named_entities
         )
 
-    def make_content(self, file_path, extractor, noun_phrases_in_about):
+    def make_content(self, file_path, extractor, noun_phrases_in_about=None):
         content_text = read_text_file(file_path=file_path)
         content_text = preprocessing(content_text)
-        merged_doc, noun_phrases, named_entities = extractor.analyse_content(content_text, noun_phrases_in_about)
+        merged_doc, noun_phrases, named_entities = extractor.analyse_content(content_text, noun_phrases_in_about or [])
         tokenized_text, ignores = merged_doc
         file_name = file_path.split('/')[-1]
         return Content(
